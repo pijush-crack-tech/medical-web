@@ -15,13 +15,13 @@ export const useCentralArchiveStore = create(
             changeViewModeToGrid : () => set({viewMode : 'grid'}),
             changeViewModeToList : () => set({viewMode : 'list'}),
 
-            archiveApi : async () => {
+            archiveApi : async (faculty_id,exam_id,filter=1,page=1) => {
                 
                 set({ 
                     loading: true, 
                 });
                 try{
-                    const data = await HomeService.getArchiveQuestions();
+                    const data = await HomeService.getArchiveQuestions(faculty_id,exam_id,filter=1,page=1);
                     set({
                         archiveData : data.data,
                         loading: false

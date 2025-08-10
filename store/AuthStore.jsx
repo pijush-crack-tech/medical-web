@@ -128,13 +128,15 @@ const useAuthStore = create(
             }
 
 
-          // Send to Django backend
-          const response = await fetch('http://dhk.cracktech.org:8004/api/v1/auth/token/', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(requestBody),
-            credentials: 'include',
-          });
+
+          const response = await apiClient.post(
+            'auth/token/', 
+            requestBody,
+            {
+              headers: headers,
+              withCredentials: true, 
+            }
+          );
 
           const result = await response.json();
           

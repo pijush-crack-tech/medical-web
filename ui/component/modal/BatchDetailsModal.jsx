@@ -1,4 +1,4 @@
-
+export const dynamic = 'force-dynamic'
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, BookOpen, Video, FileText, Target, CheckCircle, XCircle, Play, AlertCircle, Search, Archive, List, DockIcon } from 'lucide-react';
@@ -17,7 +17,8 @@ const BatchDetailsModal = ({ isOpen, onClose, batch, liveExam }) => {
         getMeritList,
         getRoutine,
         getResult,
-        getMarkSheet
+        getMarkSheet,
+        selectedFacultyExam
     } = useHomeStore();
 
     const {
@@ -89,7 +90,7 @@ const BatchDetailsModal = ({ isOpen, onClose, batch, liveExam }) => {
 
     const handleArchiveOpen = async () => {
 
-        await archiveApi()
+        await archiveApi(selectedFacultyExam.facultyId,selectedFacultyExam.examId,1,1)
     
         onBatchDetailsModalClose();
         openArchiveModal();
@@ -430,3 +431,4 @@ const BatchDetailsModal = ({ isOpen, onClose, batch, liveExam }) => {
 };
 
 export default BatchDetailsModal;
+

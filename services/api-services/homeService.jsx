@@ -29,9 +29,9 @@ export const HomeService = {
     }
   },
 
-  getArchiveQuestions: async (params = {}) => {
+  getArchiveQuestions: async (faculty_id,exam_id,filter=1,page=1) => {
     try {
-      const response = await apiClient.get('/archive/get_archive?faculty_id=4&batch_id&exam_id=4&filter=1&search=&page=1', { 
+      const response = await apiClient.get(`/archive/get_archive?faculty_id=${faculty_id}&batch_id&exam_id=${exam_id}&filter=${filter}&search=&page=${page}`, { 
         headers : getAuthHeaders()
       });
       return response.data;
@@ -168,7 +168,43 @@ export const HomeService = {
     }
   },
 
-  
+
+  getMyStudy: async (exam_id,faculty_id) => {
+    try {
+      const response = await apiClient.get(`home/get_my_study?faculty_id=${faculty_id}&exam_type=${exam_id}`,
+        { headers : getAuthHeaders()}
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('setFaculty Failed');
+    }
+  },
+
+  setUserDefaultBatch: async (batch_id) => {
+    try {
+      const response = await apiClient.post(`profile/set_default_batch`,
+        { batch_id: batch_id},
+        { headers : getAuthHeaders(),}
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('set Default batch Failed');
+    }
+  },
+
+  getBatchVideo: async (batch_id,page = 1) => {
+    try {
+      const response = await apiClient.get(`study_content/get_batch_wise_video_series?batch_id=${batch_id}&page=${page}`,
+        { headers : getAuthHeaders()}
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('setFaculty Failed');
+    }
+  },
+
 
   
+
+
 };

@@ -1,4 +1,4 @@
-
+export const dynamic = 'force-dynamic'
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -312,7 +312,7 @@ const BatchListModal = ({ isOpen, onClose, onBatchSelect }) => {
                   ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                   : 'grid-cols-1'
               }`}>
-                {batchData && batchData.page_data.map((batch) => (
+                {batchData && batchData.page_data?.map((batch) => (
                   <MiniNatchCard
                     key={batch.id}
                     batch={batch}
@@ -376,3 +376,4 @@ const BatchListModal = ({ isOpen, onClose, onBatchSelect }) => {
 
 
 export default BatchListModal;
+

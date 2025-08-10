@@ -50,7 +50,7 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Handle route protection and exam redirection
-    console.log("========> HERE <====")
+    
     if (!isLoading) {
       
       if (!isAuthenticated) {

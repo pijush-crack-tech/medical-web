@@ -30,12 +30,13 @@ const ArchiveModal = ({ isOpen, onClose, onItemSelect, fetchArchiveData }) => {
 
   const {
     getMarkSheet,
-    getQuestion
+    getQuestion,
+    selectedFacultyExam
   } = useHomeStore()
 
 
-  const fetchData = async () => {
-    await archiveApi();
+  const fetchData = async (page) => {
+    await archiveApi(selectedFacultyExam.facultyId,selectedFacultyExam.examId,1,page);
   }
 
 

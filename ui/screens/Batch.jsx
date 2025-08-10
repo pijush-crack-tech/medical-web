@@ -1,3 +1,4 @@
+
 const { containerVariants, itemVariants, cardVariants } = require("../animation/ContainerVariants")
 const { BatchCard } = require("../component/card/BatchCard")
 import { motion } from 'framer-motion';
