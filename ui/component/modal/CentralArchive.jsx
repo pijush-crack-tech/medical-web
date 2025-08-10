@@ -34,7 +34,7 @@ const ArchiveModal = ({ isOpen, onClose, onItemSelect, fetchArchiveData }) => {
   } = useHomeStore()
 
 
-  const fetchData = async () => {
+  const fetchData = async () => {``
     await archiveApi();
   }
 
