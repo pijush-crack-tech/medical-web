@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
   Users, 
@@ -24,7 +24,15 @@ import {
   Target,
   Archive,
   Video,
-  Dock
+  Dock,
+  ChevronRight,
+  Star,
+  PlayCircle,
+  FileText,
+  Activity,
+  Zap,
+  Grid,
+  BarChart3
 } from 'lucide-react';
 import { savedFacultyExam, useBatchDetailsState, useHomeStore } from '@/store/HomeStore';
 import { useRouter } from 'next/navigation';
@@ -37,34 +45,8 @@ import RoutineModal from '../component/modal/RoutineModal';
 import { useCentralArchiveStore } from '@/store/CentralArchiveStore';
 import ResultModal from '../component/modal/ResultModal';
 import MarkSheetModal from '../component/modal/MarkSheetModal';
-
-
-// Mock store hooks - replace with your actual store
-const useFacultyExam = () => {
-  return [
-    {
-      id: 4,
-      name: "FCPS",
-      faculty: [
-        { id: 1, name: "Gynae" },
-        { id: 2, name: "Surgery" },
-        { id: 3, name: "Paediatrics" },
-        { id: 4, name: "Medicine" }
-      ]
-    },
-    {
-      id: 5,
-      name: "MRCP",
-      faculty: [
-        { id: 5, name: "Internal Medicine" },
-        { id: 6, name: "Cardiology" },
-        { id: 7, name: "Neurology" }
-      ]
-    }
-  ];
-};
-
-
+import { useBatchModalStore } from '@/store/modal/BatchModalStore';
+import MyStudyModal from '../component/modal/MyStudy';
 
 const HomeScreen = () => {
   // Modal states for exam selection
@@ -76,6 +58,7 @@ const HomeScreen = () => {
   // Your original store and router usage
   const { 
     getFacultyExam, 
+    facultyExam,
     handleSelection,
     home,
     userBatch,
@@ -98,22 +81,20 @@ const HomeScreen = () => {
     onMeritModalOpen,
     isRoutineModalOpen,
     onRoutineModalClose,
-    
     getResult,
     isResultModalOpen,
     onResultModalClose,
-
     isMArkSheetModalOpen,
     onMarkSheetClose,
+    isMyStudyOpen,
+    onMyStudyClose
   } = useHomeStore();
 
-  const {
-    archiveApi
-  } = useCentralArchiveStore()
 
+
+  const { batchApi } = useBatchModalStore();
+  const { archiveApi } = useCentralArchiveStore();
   const selectedFacultyExam = savedFacultyExam();
-
-  const facultyExam = useFacultyExam();
   const router = useRouter();
 
   useEffect(() => {
@@ -149,9 +130,7 @@ const HomeScreen = () => {
       };
       
       setSavedSelections([...savedSelections, newSelection]);
-      
-      await handleSelection(newSelection)
-      
+      await handleSelection(newSelection);
       closeModal();
     }
   };
@@ -161,530 +140,391 @@ const HomeScreen = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.2
-      }
+      transition: { duration: 0.3, staggerChildren: 0.1 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.4 }
-    },
-    hover: {
-      scale: 1.05,
-      transition: { duration: 0.2 }
-    }
-  };
-
-  // Your original batch data
-  const batch = [
-    {
-      batchName: "Medical Batch 2024",
-      batchId: "1",
-      totalExam: 10,
-      givenExam: 7,
-      status: 'running'
-    },
-    {
-      batchName: "Surgery Batch A",
-      batchId: "SB2024002", 
-      totalExam: 8,
-      givenExam: 0,
-      status: 'upcomming'
-    },
-    {
-      batchName: "Pediatrics Batch",
-      batchId: "PB2024003",
-      totalExam: 12,
-      givenExam: 0,
-      status: 'upcomming'
-    },
-    {
-      batchName: "Cardiology Batch",
-      batchId: "CB2024004",
-      totalExam: 6,
-      givenExam: 0,
-      status: 'upcomming'
-    }
-  ];
-
-  // Your original quick actions data
+  // Action items
   const quickActions = [
-    { title: 'Smart Search', icon: Users, color: 'bg-blue-500', href: '/students' },
-    { title: 'Central Result', icon: BookOpen, color: 'bg-green-500', href: '/batch' },
-    { title: 'Central Archive', icon: Calendar, color: 'bg-purple-500', href: '/exam' },
-    { title: 'Central Favorite', icon: UserCheck, color: 'bg-yellow-500', href: '/attendance' },
-    { title: 'Quiz Master', icon: ClipboardList, color: 'bg-red-500', href: '/assignments' },
-    { title: 'Wrong & Unanswered', icon: GraduationCap, color: 'bg-indigo-500', href: '/exams' }
+    {
+      title: 'Central Archive',
+      icon: Archive,
+      color: 'from-purple-500 to-purple-600',
+      action: async () => {
+        if (selectedFacultyExam) {
+          await archiveApi(selectedFacultyExam.facultyId, selectedFacultyExam.examId, 1, 1);
+          openArchiveModal();
+        }
+      }
+    },
+    {
+      title: 'Central Results',
+      icon: BarChart3,
+      color: 'from-emerald-500 to-emerald-600',
+      action: async () => await getResult("")
+    },
+    {
+      title: 'Video Library',
+      icon: Video,
+      color: 'from-red-500 to-red-600',
+      action: () => {}
+    },
+    {
+      title: 'PDF Resources',
+      icon: FileText,
+      color: 'from-blue-500 to-blue-600',
+      action: () => {}
+    }
   ];
 
   return (
-    <motion.div 
-      className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 md:mt-10 lg:mt-10"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="max-w-7xl mx-auto">
-        {/* Enhanced Header with Exam Selection Button */}
-        
-
-
-        {/* Modals */}
-        <BatchListModal
-          isOpen={openBatchModal}
-          onClose={setBatchModalClose}
-          onBatchSelect={()=>{}}
-        />
-
-        <ArchiveModal
-          isOpen={isArchiveModalOpen}
-          onClose={closeArchiveModal}
-          onItemSelect={()=>{}}
-        />
-
-        <BatchDetailsModal
-          isOpen={isOpenBatchDetailsModal}
-          onClose={onBatchDetailsModalClose}
-          batch={batchDetails?.batch}
-          liveExam={batchDetails?.todays_exam}
-        />
-
-        <MeritListModal
-          isOpen={isMeritListOpen}
-          onClose={onMeritModalClose}
-        />
-
-        <RoutineModal
-          isOpen={isRoutineModalOpen}
-          onClose={onRoutineModalClose}
-        />
-
-        <ResultModal
-            isOpen={isResultModalOpen}
-            onClose={onResultModalClose}
-        />
-
-        <MarkSheetModal
-            isOpen={isMArkSheetModalOpen}
-            onClose={onMarkSheetClose}
-        />
-
-
-        {/* Stats Grid - Your original layout */}
-        <div className='flex justify-between py-2'>
-            <h2 className="text-gray-900 text-xl md:text-xl font-semibold mb-4 font-geist-sans">
-              My Batch
-            </h2>
-
-            <motion.button 
-              onClick={openModal}
-              variants={cardVariants}
-              className="bg-white rounded-xl shadow-lg border border-gray-200 p-2 hover:shadow-xl transition-shadow"
-            >
-
-              {selectedFacultyExam != null ? (
-                  <div className="flex items-center gap-3">
-                    <GraduationCap className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{selectedFacultyExam.examName} | {selectedFacultyExam.facultyName}</h3>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <Plus className="w-5 h-5" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900"> Select Exam & Faculty</h3>
-                    </div>
-                  </div>
-                )
-              }
-                  
-            </motion.button>
-        </div>
+    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100  md:mt-15 lg:mt-15">
+      <div className="h-full max-w-6xl mx-auto flex flex-col">
         
         
+
+        {/* Main Content - Perfect Vertical Flow */}
         <motion.div 
-          variants={itemVariants}
-          className="grid grid-cols-1  lg:grid-cols-1 md:grid-cols-1 gap-4 md:gap-6 mb-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex-1 p-4 sm:p-6 space-y-6"
         >
-          {userBatch && userBatch.batch_id == 0 ? <motion.button
-            onClick={setBatchModalOpen}
-            className="flex items-center justify-center gap-3 bg-white text-black rounded-xl text-xl font-bold shadow-lg border border-gray-200 p-2 hover:shadow-xl transition-shadow"
-          >
-            <Plus className="w-6 h-6 text-blue-600 rounded-lg shadow-md"/>
-            Enroll A Batch
-            </motion.button> : <div>
-            
-            {isLoading ? (
-              <div>Loading...</div>
-            ) : userBatch ? (
-              <BatchCard
-                batch={userBatch}
-                onClick={async () => {
-                  await getBatchDetails(userBatch.batch_id)
-                  onBatchDetailsModalOpen()
-                }}/>
-            ) : (
-              <div>No batch data available</div>
-            )}
-          </div>}
           
-          <div className='grid grid-cols-1 lg:grid-cols-2  md:grid-cols-2 gap-8'>
-            <motion.div variants={itemVariants} className="">
-            <h2 className="text-gray-900 text-xl md:text-xl font-semibold mb-4 md:mb-2 font-geist-sans">
-              Premium Section
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-1 gap-3 md:gap-4">
-              {/* <motion.button
-                onClick={()=>{}}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Search className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Smart Search
-                  </p>
-                </div>
-              </motion.button> */}
-              <motion.button
-                onClick={async () => {
-
-                  await archiveApi()
-                  openArchiveModal()
-
-                }}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Archive className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Central Archive
-                  </p>
-                </div>
-              </motion.button>
-
-              {/* <motion.button
-                onClick={()=>{}}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Archive className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Quiz Master
-                  </p>
-                </div>
-              </motion.button> */}
-
-              <motion.button
-                onClick={async () => { await getResult("") }}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Archive className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Central Result
-                  </p>
-                </div>
-              </motion.button>
-
-              {/* <motion.button
-                onClick={()=>{}}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Archive className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Central Favourite
-                  </p>
-                </div>
-              </motion.button> */}
-
-              {/* <motion.button
-                onClick={()=>{}}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Archive className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Wrong & Unanswered
-                  </p>
-                </div>
-              </motion.button> */}
-            </div>
-            <div>
-
-            </div>
-          </motion.div>
-          <motion.div variants={itemVariants} className="lg:col-span-1 md:col-span-1">
-            <h2 className="text-gray-900 text-xl md:text-xl font-semibold mb-4 md:mb-2 font-geist-sans">
-              Study Toolkit
-            </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-1 md:grid-cols-1 gap-3 md:gap-4">
-              <motion.button
-                onClick={()=>{}}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Video className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    Video Section
-                  </p>
-                </div>
-              </motion.button>
-              <motion.button
-                onClick={openArchiveModal}
-                variants={cardVariants}
-                whileHover="hover"
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 cursor-pointer group"
-              >
-                <div className="text-center">
-                  <div className={`bg-teal-900 rounded-lg p-3 md:p-4 mx-auto w-fit mb-3`}>
-                    <Dock className="w-3 h-3 md:w-4 md:h-4 text-white" />
-                  </div>
-                  <p className="text-xs font-bold md:text-sm  text-gray-900 group-hover:text-gray-700">
-                    PDF Section
-                  </p>
-                </div>
-              </motion.button>
-              
-            </div>
-            <div>
-
-            </div>
-          </motion.div>
-          </div>
-          
-        </motion.div>
-
-        {/* Upcoming Batch - Your original section */}
-        <div className='flex gap-4'>
-            <h2 className="text-xl md:text-xl font-semibold text-gray-900 mb-2 md:mb-2 font-geist-sans">
-              Upcomming Batch
-            </h2>
-
-            <button
-              onClick={setBatchModalOpen}
-              className="p-2 bg-teal-800 hover:bg-teal-500 rounded-md transition-colors duration-200"
-            >
-             See All Batch
-            </button>
-        </div>
-        <motion.div 
-          className="overflow-x-auto overflow-y-hidden mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="flex space-x-4 p-2" style={{ width: 'max-content' }}>
-            {upcommingBatches.map((item, index) => 
-              item.status !== "running" && (
-                <motion.div
-                  key={item.id}
-                  className="flex-shrink-0 w-80"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <BatchCard
-                    batch={item}
-                    onClick={() => {
-                      console.log('Selected batch:', item);
-                    }}
-                  />
-                </motion.div>
-              )
-            )}
-          </div>
-        </motion.div>
-
-        {/* Recent Activity - Your original section */}
-       
-      </div>
-
-      {/* Exam Selection Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Select Exam & Faculty</h1>
-                  <p className="text-gray-600">Choose your exam and faculty combination</p>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <X className="w-6 h-6 text-gray-500" />
-                </button>
+          {/* Section 1: My Active Batch */}
+          <motion.div variants={itemVariants}>
+            <div className='w-full flex justify-between mb-4'>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-bold text-gray-900">My Active Batch</h2>
               </div>
+              <motion.button 
+              onClick={openModal}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-white rounded-xl shadow-lg border border-gray-200 p-3 hover:shadow-xl transition-all"
+            >
+              {selectedFacultyExam && selectedFacultyExam?.examId != 0 ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left hidden sm:block">
+                    <p className="text-sm font-semibold text-gray-900">{selectedFacultyExam.examName}</p>
+                    <p className="text-xs text-gray-500">{selectedFacultyExam.facultyName}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="text-left hidden sm:block">
+                    <p className="text-sm font-semibold text-gray-900">Select Exam & Faculty</p>
+                    <p className="text-xs text-gray-500">Choose your specialization</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              )}
+            </motion.button>
+            </div>
+            
+            
+            <div>
+              {userBatch && userBatch.batch_id == 0 ? (
+                <motion.button
+                  onClick={async () => {
+                    if (selectedFacultyExam.examId == null || selectedFacultyExam.examId == 0){
+                      openModal()
+                    }else{
+                      batchApi(facultyExam.facultyId,facultyExam.examId);
+                      setBatchModalOpen()
+                    }
+                    
+                  }}
+                  whileHover={{ scale: 1.01 }}
+                  className="w-full text-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                      <Plus className="w-6 h-6 bg" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold">Enroll in a Batch</h3>
+                      <p className="text-blue-600 text-sm">Start your learning journey today</p>
+                    </div>
+                  </div>
+                </motion.button>
+              ) : (
+                <div>
+                  {isLoading ? (
+                    <div className="bg-white rounded-2xl p-6 shadow-lg animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  ) : userBatch ? (
+                    <BatchCard
+                      batch={userBatch}
+                      onClick={async () => {
+                        await getBatchDetails(userBatch.batch_id);
+                        onBatchDetailsModalOpen();
+                      }}
+                    />
+                  ) : (
+                    <div className="bg-white rounded-2xl p-6 shadow-lg text-center text-gray-500">
+                      No batch data available
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Section 2: Quick Actions */}
+          <motion.div variants={itemVariants}>
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => (
+                <motion.button
+                  key={action.title}
+                  onClick={action.action}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-all group"
+                >
+                  <div className="text-center">
+                    <div className={`w-12 h-12 bg-gradient-to-br ${action.color} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                      <action.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">{action.title}</p>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Section 3: Upcoming Batches - Horizontal Scroll */}
+          <motion.div variants={itemVariants}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-lg font-bold text-gray-900">Upcoming Batches</h2>
+              </div>
+              <motion.button
+                onClick={async () => {
+                  await batchApi(facultyExam.facultyId,facultyExam.examId);
+                  setBatchModalOpen();
+                }}
+                whileHover={{ scale: 1.05 }}
+                className="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-600 transition-colors"
+              >
+                View All
+              </motion.button>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Selection Card */}
-              <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-                {/* Exam Selection */}
-                <div className="p-6 bg-white border-b border-gray-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Book className="w-6 h-6 text-blue-600" />
-                    <h2 className="text-xl font-semibold text-gray-800">Select Exam</h2>
-                  </div>
-                  
-                  <div className="grid gap-3">
-                    {facultyExam.map((exam) => (
-                      <div
-                        key={exam.id}
-                        onClick={() => handleExamSelect(exam)}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                          selectedExam?.id === exam.id
-                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                            : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-semibold text-gray-800">{exam.name}</h3>
-                            <p className="text-sm text-gray-600">{exam.faculty.length} faculties available</p>
-                          </div>
-                          {selectedExam?.id === exam.id && (
-                            <CheckCircle className="w-6 h-6 text-blue-600" />
-                          )}
-                        </div>
+            {/* Horizontal Scrollable List */}
+            <div className="overflow-x-auto pb-4 -mx-4 px-4">
+              <div className="flex space-x-4" style={{ width: 'max-content' }}>
+                {upcommingBatches.filter(item => item.status !== "running").map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => console.log('Selected batch:', item)}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer group flex-shrink-0 w-72"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate mb-1">
+                          {item.batch_name || item.text}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          ID: {item.batch_id || item.id}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Faculty Selection */}
-                {selectedExam && (
-                  <div className="p-6 bg-white">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Users className="w-6 h-6 text-green-600" />
-                      <h2 className="text-xl font-semibold text-gray-800">Select Faculty</h2>
+                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                        Upcoming
+                      </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                      {selectedExam.faculty.map((faculty) => (
-                        <div
-                          key={faculty.id}
-                          onClick={() => handleFacultySelect(faculty)}
-                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                            selectedFaculty?.id === faculty.id
-                              ? 'border-green-500 bg-green-50 shadow-md'
-                              : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-800">{faculty.name}</h3>
-                            {selectedFaculty?.id === faculty.id && (
-                              <CheckCircle className="w-6 h-6 text-green-600" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" />
+                        {item.exam_count || 0}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Video className="w-3 h-3" />
+                        {item.batch_video_count || item.video_count || 0}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FileText className="w-3 h-3" />
+                        {item.batch_pdf_count || item.pdf_count || 0}
+                      </div>
                     </div>
-
-                    {/* Current Selection Summary */}
-                    {selectedFaculty && (
-                      <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <h3 className="font-semibold text-gray-800 mb-2">Current Selection:</h3>
-                        <div className="flex flex-wrap gap-4 text-sm">
-                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                            Exam: {selectedExam.name} (ID: {selectedExam.id})
-                          </span>
-                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                            Faculty: {selectedFaculty.name} (ID: {selectedFaculty.id})
-                          </span>
-                        </div>
+                    
+                    {(item.batch_start_date || item.start_date) && (
+                      <div className="text-xs text-gray-500 flex justify-between items-center">
+                        <span>Starts: {new Date(item.batch_start_date || item.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
                       </div>
                     )}
+                  </motion.div>
+                ))}
+                
+                {upcommingBatches.filter(item => item.status !== "running").length === 0 && (
+                  <div className="text-center py-8 text-gray-500 w-full min-w-[300px]">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No upcoming batches available</p>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Modal Footer */}
-            {selectedExam && selectedFaculty && (
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={closeModal}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={async () => await handleSave()}
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    <Save className="w-5 h-5" />
-                    Save Selection
-                  </button>
-                </div>
-              </div>
-            )}
           </motion.div>
-        </div>
-      )}
-    </motion.div>
+
+        </motion.div>
+
+        {/* All Modals */}
+        <BatchListModal isOpen={openBatchModal} onClose={setBatchModalClose} onBatchSelect={() => {}} />
+        <ArchiveModal isOpen={isArchiveModalOpen} onClose={closeArchiveModal} onItemSelect={() => {}} />
+        <BatchDetailsModal isOpen={isOpenBatchDetailsModal} onClose={onBatchDetailsModalClose} batch={batchDetails?.batch} liveExam={batchDetails?.todays_exam} />
+        <MeritListModal isOpen={isMeritListOpen} onClose={onMeritModalClose} />
+        <RoutineModal isOpen={isRoutineModalOpen} onClose={onRoutineModalClose} />
+        <ResultModal isOpen={isResultModalOpen} onClose={onResultModalClose} />
+        <MarkSheetModal isOpen={isMArkSheetModalOpen} onClose={onMarkSheetClose} />
+        <MyStudyModal isOpen={isMyStudyOpen} onClose={onMyStudyClose} />
+
+        {/* Exam Selection Modal */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden"
+              >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-xl font-bold">Select Exam & Faculty</h1>
+                      <p className="text-blue-100 text-sm">Choose your specialization</p>
+                    </div>
+                    <button onClick={closeModal} className="p-2 hover:bg-white/20 rounded-lg">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 max-h-[65vh] overflow-y-auto">
+                  {/* Exam Selection */}
+                  <div className="mb-6">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Exam</h2>
+                    <div className="grid gap-3">
+                      {facultyExam.map((exam) => (
+                        <motion.div
+                          key={exam.id}
+                          onClick={() => handleExamSelect(exam)}
+                          whileHover={{ scale: 1.01 }}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            selectedExam?.id === exam.id
+                              ? 'border-blue-500 bg-blue-50 shadow-lg'
+                              : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold text-gray-800">{exam.name}</h3>
+                              <p className="text-sm text-gray-600">{exam.faculty.length} faculties available</p>
+                            </div>
+                            {selectedExam?.id === exam.id && (
+                              <CheckCircle className="w-6 h-6 text-blue-600" />
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Faculty Selection */}
+                  <AnimatePresence>
+                    {selectedExam && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Faculty</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                          {selectedExam.faculty.map((faculty) => (
+                            <motion.div
+                              key={faculty.id}
+                              onClick={() => handleFacultySelect(faculty)}
+                              whileHover={{ scale: 1.01 }}
+                              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                selectedFaculty?.id === faculty.id
+                                  ? 'border-emerald-500 bg-emerald-50 shadow-lg'
+                                  : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-gray-800">{faculty.name}</h3>
+                                {selectedFaculty?.id === faculty.id && (
+                                  <CheckCircle className="w-6 h-6 text-emerald-600" />
+                                )}
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Footer */}
+                <AnimatePresence>
+                  {selectedExam && selectedFaculty && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      className="border-t border-gray-200 px-6 py-4 bg-gray-50"
+                    >
+                      <div className="flex gap-3">
+                        <button
+                          onClick={closeModal}
+                          className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSave}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-emerald-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                        >
+                          Save Selection
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 

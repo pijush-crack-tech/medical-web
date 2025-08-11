@@ -14,7 +14,7 @@ export const useBatchModalStore = create(
             viewMode : 'list',
             changeViewModeToGrid : () => set({viewMode : 'grid'}),
             changeViewModeToList : () => set({viewMode : 'list'}),
-            batchApi : async () => {
+            batchApi : async (faculty,exam,page = 1) => {
                 console.log("Calling From Archive Store")
                 set({ 
                     loading: true, 

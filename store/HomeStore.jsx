@@ -63,6 +63,57 @@ export const useHomeStore = create(
                 // Answer Sheet
                 answerSheet : null,
 
+
+                // My Study
+                isMyStudyOpen : false,
+                onMyStudyClose : () => set({isMyStudyOpen:false}),
+                onMyStudyOpen : () => set({isMyStudyOpen:true}),
+                myStudy : null,
+
+                getMyStudy: async() => {
+                    set({ 
+                        loading: true,
+                        error: null 
+                    });
+                    try {
+                        const data = await HomeService.getMyStudy(get().selectedFacultyExam.examId,get().selectedFacultyExam.facultyId);
+                        set({
+                            myStudy: data.data,
+                            isMyStudyOpen : true
+                        });
+                        return data.data;
+                    } catch (error) {
+                        console.error('Error fetching My Study:', error);
+                        set({ 
+                            loading: false, 
+                            error: error.message || 'Failed to fetch exam'
+                        });
+                        throw error;
+                    }
+                },
+
+                makeBatchDefault : async (batch_id) => {
+                    set({ 
+                        loading: true,
+                        error: null 
+                    });
+                    try {
+                        const data = await HomeService.setUserDefaultBatch(batch_id);
+                        set({
+                            
+                            isMyStudyOpen : false
+                        });
+                        return data.data;
+                    } catch (error) {
+                        console.error('Error fetching My Study:', error);
+                        set({ 
+                            loading: false, 
+                            error: error.message || 'Failed to fetch exam'
+                        });
+                        throw error;
+                    }
+                },
+
                 setAnswerSheet : (data) => set({answerSheet : data}),
 
                 getQuestion : async (id) => {
@@ -128,7 +179,7 @@ export const useHomeStore = create(
 
                 getResult : async (batch_id) => {
                     try{
-                        const data = await HomeService.getResult(batch_id,4,4,1);
+                        const data = await HomeService.getResult(batch_id,get().selectedFacultyExam.facultyId,get().selectedFacultyExam.examId,1);
                         set({
                             result : data.data,
                             isResultModalOpen : true,
@@ -149,7 +200,7 @@ export const useHomeStore = create(
                 getRoutine : async (batch_id) => {
 
                     try{
-                        const data = await HomeService.getRoutine(batch_id,4,4,1);
+                        const data = await HomeService.getRoutine(batch_id,get().selectedFacultyExam.facultyId,get().selectedFacultyExam.examId,1);
                         set({
                             routine : data.data,
                             isRoutineModalOpen : true,
@@ -233,7 +284,7 @@ export const useHomeStore = create(
                     try{
                         const data = await HomeService.getBatchDetails(batch_id);
                         set({
-                            batchDetails : data.data,
+                            batchDetails : data.data || { total_exam : 0},
                         })
 
                         console.log("Batch DEtails", data.data)
@@ -246,7 +297,7 @@ export const useHomeStore = create(
                             error: error.message || 'Failed to fetch home'
                         });
                         
-                        throw error;
+                        return{ total_exam : 0}
                     }
                     
                 },
@@ -259,7 +310,9 @@ export const useHomeStore = create(
                         console.log(data.data.user_batch)
                         set({
                             upcommingBatches : data.data.upcoming_batch,
-                            userBatch : data.data.user_batch,
+                            userBatch : data.data.user_batch || {
+                                total_exam : 0
+                            },
                             isLoading: false
                         })
                         
@@ -269,11 +322,14 @@ export const useHomeStore = create(
                         
                         set({ 
                             isLoading: false, 
-                            
+                            userBatch : {
+                                total_exam : 0
+                            },
                             error: error.message || 'Failed to fetch home'
                         });
                         
-                        throw error;
+                        return { total_exam : 0}
+                        
                     }
                     
                 },
@@ -298,7 +354,13 @@ export const useHomeStore = create(
                             user : response.data.user, 
                             isLoading: false,
                             error: null,
-                            lastFetchTime: Date.now()
+                            lastFetchTime: Date.now(),
+                            selectedFacultyExam : (response.data.user.exam_type != null || esponse.data.user.exam_type != 0) ? {
+                                examId : response.data.user.exam_type,
+                                examName : response.data.user.exam_name,
+                                facultyId : response.data.user.faculty,
+                                facultyName : response.data.user.faculty_name
+                            } : {}
                         });
                         
                         return response.data || response;

@@ -482,7 +482,7 @@ const ExamContent = () => {
   const summary = getSubmissionSummary();
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen md:mt-15 lg:mt-15">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b">
         <div className="max-w-4xl mx-auto px-6 py-4">

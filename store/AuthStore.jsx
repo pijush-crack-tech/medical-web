@@ -1,6 +1,7 @@
 // Create a new file: store/authStore.js
 // This manages your authentication state globally
 
+import apiClient from '@/services/axiosInstance';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -116,29 +117,34 @@ const useAuthStore = create(
             "idname" : firebaseUser.uid,
             "display_name" : firebaseUser.displayName,
             "picture" : photoURL,
-            "phone" : "01675736587"
+            "phone" : ""
           }
 
           const headers = {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
               'Firebase-Token': `MedicalHigherStudy ${firebaseUser.accessToken}`,
-              'Device-Id' : "1s3d4f",
+              'Device-Id' : `${firebaseUser.uid}-${firebaseUser.displayName}`,
               'Login-Medium' : "Browser"
             }
 
 
-          // Send to Django backend
-          const response = await fetch('http://dhk.cracktech.org:8004/api/v1/auth/token/', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(requestBody),
-            credentials: 'include',
-          });
 
-          const result = await response.json();
+          const response = await apiClient.post(
+            'auth/token/', 
+            requestBody,
+            {
+              headers: headers,
+              withCredentials: true, 
+            }
+          );
+
           
-          if (response.ok) {
+
+          const result = response.data;
+          
+
+          if (response.status == 200) {
             // Set user data in store
             set({
               user: {

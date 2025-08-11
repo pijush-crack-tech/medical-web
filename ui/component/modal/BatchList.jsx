@@ -1,4 +1,4 @@
-
+export const dynamic = 'force-dynamic'
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -15,6 +15,7 @@ import {
   List
 } from 'lucide-react';
 import { useBatchModalStore } from '@/store/modal/BatchModalStore';
+import { useRouter } from 'next/navigation';
 
 // Mini BatchCard for the modal list
 const MiniNatchCard = ({ batch, onClick, onEnroll }) => {
@@ -132,6 +133,8 @@ const BatchListModal = ({ isOpen, onClose, onBatchSelect }) => {
       batchApi();
     }
   },[isOpen, batchData])
+
+  const router = useRouter();
 
 
 
@@ -312,12 +315,16 @@ const BatchListModal = ({ isOpen, onClose, onBatchSelect }) => {
                   ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                   : 'grid-cols-1'
               }`}>
-                {batchData && batchData.page_data.map((batch) => (
+                {batchData && batchData.page_data?.map((batch) => (
                   <MiniNatchCard
                     key={batch.id}
                     batch={batch}
                     onClick={handleBatchClick}
-                    onEnroll={()=>{enrollBatch(batch.id)}}
+                    onEnroll={async () => {
+                      await enrollBatch(batch.id)
+                      onClose()
+                      window.location.reload()
+                    }}
                   />
                 ))}
               </div>
@@ -376,3 +383,4 @@ const BatchListModal = ({ isOpen, onClose, onBatchSelect }) => {
 
 
 export default BatchListModal;
+

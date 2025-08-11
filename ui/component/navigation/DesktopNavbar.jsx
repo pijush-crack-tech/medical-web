@@ -12,10 +12,12 @@ import {
   X,
   Bell,
   Heart,
-  ShoppingCart
+  ShoppingCart,
+  LogOut
 } from 'lucide-react';
 import { useNavStore,navItems, NavbarStore } from '@/store/NavbarStore';
 import useAuthStore from '@/store/AuthStore';
+import { useHomeStore } from '@/store/HomeStore';
 
 // Icon mapping for dynamic rendering
 const iconMap = {
@@ -30,6 +32,10 @@ const DesktopNavbar = () => {
   const { isMobileMenuOpen, toggleMobileMenu } = useNavStore();
   const [isLoading, setIsLoading] = useState(false);
   const { logout, clearAuth } = useAuthStore();
+
+  const {
+    getMyStudy
+  } = useHomeStore()
 
   const handleLogout = async () => {
     try {
@@ -75,7 +81,17 @@ const DesktopNavbar = () => {
               const IconComponent = iconMap[item.icon];
               
               return (
-                <Link key={item.id} href={item.href}>
+                // <Link key={item.id} href={item.href}>
+                <motion.button
+                  key={item.id}
+                  onClick={async () => {
+                    if(item.id === "MyStudy"){
+                      await getMyStudy()
+                    }
+                  }}
+                >
+
+                
                   <motion.div
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors font-geist-sans ${
                       isActive 
@@ -88,7 +104,8 @@ const DesktopNavbar = () => {
                     <IconComponent className="w-4 h-4" />
                     <span>{item.label}</span>
                   </motion.div>
-                </Link>
+                </motion.button>
+                // </Link>
               );
             })}
           </div>
@@ -101,7 +118,7 @@ const DesktopNavbar = () => {
               whileTap={{ scale: 0.9 }}
               onClick={handleLogout}
             >
-              <Bell className="w-5 h-5 text-gray-700" />
+              <LogOut className="w-5 h-5 text-gray-700" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
             </motion.button>
             

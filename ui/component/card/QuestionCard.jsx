@@ -11,10 +11,19 @@ import {
   Eye,
   Download,
   X,
-  CrossIcon
+  CrossIcon,
+  AlertCircle
 } from 'lucide-react';
 
-const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions, onStudyMaterials }) => {
+const QuestionCard = ({ 
+  item, 
+  onClick, 
+  onTakeExam, 
+  onViewResult, 
+  onViewQuestions, 
+  onStudyMaterials,
+  onUpgrade = null // Optional upgrade action callback
+}) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -58,6 +67,34 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
     action();
   };
 
+  // Handle take exam with access validation using existing item property
+  const handleTakeExamClick = (e) => {
+    e.stopPropagation();
+    
+    if (!item.has_exam_access) {
+      // Show access denied message
+      const message = 'You need an active exam package to take this exam. Please upgrade your subscription.';
+      
+      alert(message);
+      
+      // Call upgrade function if provided
+      if (onUpgrade) {
+        onUpgrade();
+      }
+      return;
+    }
+    
+    onTakeExam(item);
+  };
+
+  // Get the appropriate button style for take exam using existing item property
+  const getTakeExamButtonStyle = () => {
+    if (!item.has_exam_access) {
+      return "w-full flex items-center justify-center gap-2 bg-gray-400 text-white py-2.5 px-4 rounded-lg font-medium cursor-not-allowed opacity-70";
+    }
+    return "w-full flex items-center justify-center gap-2 bg-gradient-to-r from-teal-500 to-teal-500 text-white py-2.5 px-4 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-md hover:shadow-lg";
+  };
+
   return (
     <motion.div
       onClick={() => onClick && onClick(item)}
@@ -71,7 +108,6 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
           <h3 className="font-semibold text-gray-900 text-base mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors">
             {item.syllabus}
           </h3>
-          
         </div>
         
         <div className="flex flex-col items-end gap-2">
@@ -110,16 +146,28 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
         </div>
       </div>
 
-      {/* Question ID */}
-      {/* <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-          ID: {item.question_id}
-        </span>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <Eye className="w-3 h-3" />
-          <span>View Details</span>
+      {/* Access Warning Banner - Show when no exam access */}
+      {!item.has_exam_access && !item.attended && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+            <div className="flex-1">
+              <span className="text-sm text-yellow-800">
+                Exam access required to take this exam.
+              </span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onUpgrade) onUpgrade();
+                }}
+                className="text-sm font-medium text-yellow-900 underline hover:text-yellow-700 transition-colors ml-1"
+              >
+                Upgrade now
+              </button>
+            </div>
+          </div>
         </div>
-      </div> */}
+      )}
 
       {/* Action Buttons */}
       <div className="flex grid-cols-2 gap-4">
@@ -127,7 +175,7 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onStudyMaterials(item)}
+          onClick={(e) => handleButtonClick(e, () => onStudyMaterials(item))}
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white py-2.5 px-4 rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
         >
           <BookOpen className="w-4 h-4" />
@@ -141,7 +189,7 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onViewResult(item)}
+              onClick={(e) => handleButtonClick(e, () => onViewResult(item))}
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm"
             >
               <Award className="w-4 h-4" />
@@ -150,7 +198,7 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onViewQuestions(item)}
+              onClick={(e) => handleButtonClick(e, () => onViewQuestions(item))}
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm"
             >
               <FileText className="w-4 h-4" />
@@ -158,15 +206,25 @@ const QuestionCard = ({ item, onClick, onTakeExam, onViewResult, onViewQuestions
             </motion.button>
           </div>
         ) : (
-          // If not attended - show Take Exam button
+          // If not attended - show Take Exam button with access control
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onTakeExam(item)}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-teal-500 to-teal-500 text-white py-2.5 px-4 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-md hover:shadow-lg"
+            whileHover={item.has_exam_access ? { scale: 1.02 } : {}}
+            whileTap={item.has_exam_access ? { scale: 0.98 } : {}}
+            onClick={handleTakeExamClick}
+            disabled={!item.has_exam_access}
+            className={getTakeExamButtonStyle()}
           >
-            <PlayCircle className="w-4 h-4" />
-            Take Exam
+            {item.has_exam_access ? (
+              <>
+                <PlayCircle className="w-4 h-4" />
+                Take Exam
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                Locked - Upgrade Required
+              </>
+            )}
           </motion.button>
         )}
       </div>

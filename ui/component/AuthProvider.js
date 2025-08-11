@@ -50,12 +50,15 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Handle route protection and exam redirection
-    console.log("========> HERE <====")
+    
     if (!isLoading) {
+
+      console.log("is Authenticated",isAuthenticated)
+      console.log("path name",pathname)
       
       if (!isAuthenticated) {
         router.replace("/login");
-      } else if (isAuthenticated && pathname === '/login') {
+      } else if (isAuthenticated && pathname === '/login/') {
         router.replace("/");
       } else if (isAuthenticated && hasActiveExam && !pathname.startsWith('/exam')) {
         // If user has active exam but not on exam page, redirect to exam
